@@ -18,8 +18,7 @@ jobs:
         command: mkdir -p /opt/android/sdk/licenses
     - run:
         name: Transfer Android SDK licenses
-        command: |
-            cp licenses/android-sdk-license /opt/android/sdk/licenses/
+        command: cp licenses/android-sdk-license /opt/android/sdk/licenses/
     - restore_cache:
         key: jars-{{ checksum "build.gradle" }}-{{ checksum "app/build.gradle" }}
     - run:
@@ -32,7 +31,6 @@ jobs:
     - run:
         name: Build debug APK and release APK
         command: |
-          pwd
           ./gradlew :app:assembleDebug
           ./gradlew :app:assembleAndroidTest
     - run:
@@ -56,9 +54,8 @@ jobs:
             --test app\build\outputs\apk\androidTest\debug\app-debug-androidTest.apk \
             --device model=Nexus6P,version=27,locale=en_US,orientation=portrait \
             --device model=taimen,version=27,locale=en_US,orientation=portrait
-
     - run:
         name: Install gsutil dependency and copy test results data
         command: |
           sudo pip install -U crcmod
-          sudo gsutil -m cp -r -U `sudo gsutil ls gs://test-lab-mzisj6ddf91fi-kd2xvqcsfti8k | tail -1` ${CIRCLE_ARTIFACTS}/ | true
+          sudo gsutil -m cp -r -U `sudo gsutil ls gs://test-lab-30c0ppmupd2ra-itnp8ctmfqjyx | tail -1` ${CIRCLE_ARTIFACTS}/ | true
