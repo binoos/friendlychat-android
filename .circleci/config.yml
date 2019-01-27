@@ -19,10 +19,7 @@ jobs:
     - run:
         name: Transfer Android SDK licenses
         command: |
-            echo "${HOME}"
-            pwd
-            ls -al
-            cp ${HOME}/licenses/android-sdk-license /opt/android/sdk/licenses/
+            cp licenses/android-sdk-license /opt/android/sdk/licenses/
             cd android-start
     - restore_cache:
         key: jars-{{ checksum "build.gradle" }}-{{ checksum "app/build.gradle" }}
