@@ -1,0 +1,63 @@
+# Android Gradle CircleCI 2.0 configuration
+#
+version: 2
+jobs:
+  build:
+    branches:
+      only:
+      - master
+    docker:
+    - image: circleci/android:api-27-alpha
+
+    working_directory: ~/android-start/
+    environment:
+      JVM_OPTS: -Xmx3200m
+    steps:
+    - checkout
+    - run:
+        name: Create android licenses directory if it doesn't exist
+        command: mkdir -p /opt/android/sdk/licenses
+    - run:
+        name: Transfer Android SDK licenses
+        command: cp licenses/android-sdk-license /opt/android/sdk/licenses/
+    - restore_cache:
+        key: jars-{{ checksum "build.gradle" }}-{{ checksum "app/build.gradle" }}
+    - run:
+        name: Download Dependencies
+        command: ./gradlew androidDependencies
+    - save_cache:
+        paths:
+        - ~/.gradle
+        key: jars-{{ checksum "build.gradle" }}-{{ checksum "app/build.gradle" }}
+    - run:
+        name: Build debug APK and release APK
+        command: |
+          ./gradlew :app:assembleDebug
+          ./gradlew :app:assembleAndroidTest
+    - run:
+        name: Store Google Service Account
+        command: echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
+    - run:
+        name: Authorize gcloud and set config defaults
+        command: |
+          sudo gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+          sudo gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+    - run:
+        name: List Android devices available to test against
+        command: |
+          sudo gcloud firebase test android models list
+    - run:
+        name: Test with Firebase Test Lab
+        command: >
+          sudo gcloud firebase test android run \
+            --type instrumentation \
+            --app app\build\outputs\apk\debug\app-debug.apk \
+            --test app\build\outputs\apk\androidTest\debug\app-debug-androidTest.apk \
+            --device model=Nexus6P,version=27,locale=en_US,orientation=portrait \
+            --device model=taimen,version=27,locale=en_US,orientation=portrait
+
+    - run:
+        name: Install gsutil dependency and copy test results data
+        command: |
+          sudo pip install -U crcmod
+          sudo gsutil -m cp -r -U `sudo gsutil ls gs://test-lab-mzisj6ddf91fi-kd2xvqcsfti8k | tail -1` ${CIRCLE_ARTIFACTS}/ | true
