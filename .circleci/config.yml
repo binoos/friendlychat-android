@@ -19,7 +19,10 @@ jobs:
         command: mkdir -p /opt/android/sdk/licenses
     - run:
         name: Transfer Android SDK licenses
-        command: cp licenses/android-sdk-license /opt/android/sdk/licenses/
+        command: |
+            pwd
+            ls -al
+            cp ${HOME}/licenses/android-sdk-license /opt/android/sdk/licenses/
     - restore_cache:
         key: jars-{{ checksum "build.gradle" }}-{{ checksum "app/build.gradle" }}
     - run:
